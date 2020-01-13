@@ -1,5 +1,5 @@
 # SmartThings <-> Unifi Presence Sensor (BRIDGE)
-Integration for SmartThings to use wireless Unifi clients as presence sensors
+Integration for SmartThings to use Unifi wireless clients as presence sensors
 
 **Warning**: no authentication is performed. Don't expose this service to outside network.
 
