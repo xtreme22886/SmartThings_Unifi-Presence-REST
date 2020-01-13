@@ -40,6 +40,10 @@ To install this Docker image on a Synology NAS
 10.  Choose a local port to use in the **Port Settings** tab (ex: **9443**)
 11. Click on **Apply** => **Next** => **Apply**
 
+## Testing
+
+Once you have a Docker container running the above image, you can verify things are working correctly but browsing to the IP address of your Docker with the port of the container. Browsing to that website should respond back with a *Hello World* message.
+
 ## Built With
 
 * [FastAPI](https://fastapi.tiangolo.com/) - Web framework for building APIs
