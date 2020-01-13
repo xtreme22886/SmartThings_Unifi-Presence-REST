@@ -29,5 +29,3 @@ To install this Docker image on a Synology NAS
 9. Check the "auto-restart" checkbox in the Advanced Settings tab
 10.  Check the "Use the same network as Docker Host" checkbox in the Network tab
 11. Click on Apply => Next => Apply
-
-The REST API server will listen on port `9443` by default. If you encounter any port conflicts run the container with the port option: `-p XXXX:9443`
