@@ -6,7 +6,7 @@
 
 This is a REST API server built with FastAPI to facilitate the communication between SmartThings and an Unifi Controller. It has been built into a Docker image which can be installed following the below.
 
-### Installing the Docker Image
+## Installing the Docker Image
 
 ```
 For x32/x64
@@ -26,7 +26,7 @@ To change the port Docker container is using:
 
 The `-p` cmd tells Docker which host port to map to the container port. Container is set to use 9443 so you can either use that same port with the commands above or change the commands as follows: `-p <desired port>:9443` (where desired port is the port number you want)
 
-## Synology NAS
+### Synology NAS
 To install this Docker image on a Synology NAS
 1. Open Docker app in Synology Web GUI
 2. Select the **Registry** tab in the left menu
