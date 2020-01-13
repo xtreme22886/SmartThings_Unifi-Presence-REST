@@ -13,6 +13,7 @@ For arm32 (Raspberry Pi)
 Run this image:
 `docker run -d --restart always --name unifi-presence --net=host xtreme22886/unifi-presence-rest-arm`
 
+To install this Docker image on a Synology NAS
 1. Open Docker app in Synology Web GUI
 2. Select the Registry tab in the left menu
 3. Search for "xtreme22886"
