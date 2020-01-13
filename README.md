@@ -3,12 +3,12 @@ Integration for SmartThings to use Unifi wireless clients as presence sensors
 
 **Warning**: no authentication is performed. Don't expose this service to outside network.
 
-For amd32/64
+For x32/x64
 
 Run this image:
 `docker run -d --restart always --name unifi-presence --net=host xtreme22886/unifi-presence-rest`
 
-For arm32 (Raspberry Pi)
+For ARM (Raspberry Pi)
 
 Run this image:
 `docker run -d --restart always --name unifi-presence --net=host xtreme22886/unifi-presence-rest-arm`
