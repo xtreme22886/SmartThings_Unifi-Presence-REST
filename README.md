@@ -17,7 +17,7 @@ To install this Docker image on a Synology NAS
 1. Open Docker app in Synology Web GUI
 2. Select the Registry tab in the left menu
 3. Search for "xtreme22886"
-4. Select and download the "xtreme22886/unifi-presence-rest" image (choose the "latest" tag for the stable version or see the Docker Versions section above for other versions/tags)
+4. Select and download the "xtreme22886/unifi-presence-rest" image (choose the "latest" tag)
 5. Select the Image tab in the left menu and wait for the image to fully download
 6. Select the downloaded image and click on the Launch button
 7. Give the Container a sensible name (e.g. "unifi-presence")
