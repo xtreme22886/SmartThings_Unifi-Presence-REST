@@ -12,7 +12,7 @@ def getConfig(): # Define getConfig() function
         with open('config.json', 'r') as file: # We can open 'config.json' as file with read permissions
             settings = json.load(file) # Load the JSON data found in file
     except FileNotFoundError: # Could not open 'config.json' file
-        return # Return a NULL response
+        return # Return a NUL response
 
     # Base URL of the Unifi Controller and site:
     global baseURL # Initilize global variable
@@ -57,7 +57,7 @@ def CheckPresence(macList): # Define CheckPresence() function
         session.get(logoutURL) # Logout from the API
         return results # Return results list when done
     else:
-        return # Return NULL if unable to log into the Unifi Controller
+        return # Return NUL if unable to log into the Unifi Controller
 
 # Log into the Unifi Controller and generate a list of known wireless clients
 def WiFiClients(): # Define WiFiClients() function
@@ -93,4 +93,4 @@ def WiFiClients(): # Define WiFiClients() function
                     knownWifiClients.append({'name': name + " (" + mac[-5:] + ")", 'mac': mac, 'id': "unifi-" + mac[-5:]}) # Append client information to knownWifiClients list
             return sorted(knownWifiClients, key = lambda i: i['name']) # Return a sorted (by name) list of konwn wireless clients
     else: # No config file
-        return # Return NULL
+        return # Return NUL
