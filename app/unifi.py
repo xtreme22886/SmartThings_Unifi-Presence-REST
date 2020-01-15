@@ -54,7 +54,7 @@ def CheckPresence(macList): # Define CheckPresence() function
             timeNow = int(time.time()) # Get current epoch time
             timeDiff = timeNow - lastSeen # Get time elasped since 'Last Seen' in seconds
             if isWired == False: # Bug in Unifi Controller has 'last_seen' time updating even after device has left the network. If a wireless device is now showing 'wired' then it's a good indication that it has left the network
-                if timeDiff > 30: # If time since 'last_seen' is greater than 30 seconds, concider the device has left the network
+                if timeDiff > 60: # If time since 'last_seen' is greater than 60 seconds, consider the device not present
                     results.append({'mac': mac, 'present': False}) # Append results of presence check to results list
                 else:
                     results.append({'mac': mac, 'present': True}) # Append results of presence check to results list
