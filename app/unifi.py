@@ -50,11 +50,11 @@ def CheckPresence(macList): # Define CheckPresence() function
             data = macStatsResponse.json().get('data') # Grab the 'data' from the reply
             macStats = dict(data[0]) # Convert 'data' json list to dict (grab first element of list)
             isWired = macStats['is_wired'] # If wireless device shows wired, it means it's offline. Stupid Unifi
-            try:
-                visableToUAP = macStats['_last_seen_by_uap']
-            except:
-                visableToUAP = None
-            if visableToUAP != None and isWired == False: # Bug in Unifi Controller has 'last_seen' time updating even after device has left the network. If a wireless device is now showing 'wired' then it's a good indication that it has left the network
+            try: # See if
+                visableToUAP = macStats['_last_seen_by_uap'] # We can pull a value from this key
+            except: # If not
+                visableToUAP = None # Set 'visableToUAP to None
+            if visableToUAP != None and isWired == False: # If the device is visable to a UAP and is not wired, device is online, otherwise, consider it offline
                 results.append({'mac': mac, 'present': True}) # Append results of presence check to results list
             else:
                 results.append({'mac': mac, 'present': False}) # Append results of presence check to results list
