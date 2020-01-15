@@ -49,15 +49,11 @@ def CheckPresence(macList): # Define CheckPresence() function
             macStatsResponse = session.get(macStatsURL) # Request details of given mac address from the Unifi Controller
             data = macStatsResponse.json().get('data') # Grab the 'data' from the reply
             macStats = dict(data[0]) # Convert 'data' json list to dict (grab first element of list)
-            isWired = macStats['is_wired'] # If wireless device shows wired, it means it's offline. Stupid Unifi
             try: # See if
                 visableToUAP = macStats['_last_seen_by_uap'] # We can pull a value from this key
+                results.append({'mac': mac, 'present': True}) # If we can, mark device as 'online'
             except: # If not
-                visableToUAP = None # Set 'visableToUAP to None
-            if visableToUAP != None and isWired == False: # If the device is visable to a UAP and is not wired, device is online, otherwise, consider it offline
-                results.append({'mac': mac, 'present': True}) # Append results of presence check to results list
-            else:
-                results.append({'mac': mac, 'present': False}) # Append results of presence check to results list
+                results.append({'mac': mac, 'present': False}) # Mark device as 'offline'
         session.get(logoutURL) # Logout from the API
         return results # Return results list when done
     else:
