@@ -1,7 +1,6 @@
 # Import all libraries required
 import json
 import requests
-import time
 import warnings
 
 # Ignore self-signed cert warning
