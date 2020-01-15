@@ -117,6 +117,12 @@ def settings(settings: STsettings): # Pass data supplied in POST to pydantic (ST
 
     with open('config.json', 'w') as file: # Open 'config.json' as file with write permissions
         json.dump(data, file, indent=4, sort_keys=True) # Write 'data' JSON object to file
+        
+    # Obfuscate the Unifi password
+    visablePassword = {'password': settings.unifiPassword} # Define password to obfuscate
+    for setting in data['unifi']: # For each setting in the 'Unifi' JSON section
+        if setting == visablePassword: # If we are able to locate the Unifi password
+            setting['password'] = "<password>" # Then replace the password with <password>
 
     print("Received {} and saved to config.json".format(data)) # Print to screen the data that was received and save to config.json
 
