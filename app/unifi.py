@@ -4,8 +4,6 @@ import requests
 import time
 import warnings
 
-thresholdLastSeen = 90
-
 # Ignore self-signed cert warning
 warnings.filterwarnings("ignore")
 
@@ -42,7 +40,6 @@ getConfig() # Initilize the config settings at bootup
 
 # Take a list of supplied mac address' and check their presence
 def CheckPresence(macList): # Define CheckPresence() function
-    print ("If the time difference is above {} seconds, device is considered 'offline'".format(thresholdLastSeen))
     session = requests.Session() # Begin request session
     login_response = session.post(loginURL, data=json.dumps(loginCreds).encode('utf8'), headers={'Content-type': 'application/json'}, verify=False) # Log into Unifi API
     if login_response.status_code == 200: # If login successful, do stuff:
@@ -53,15 +50,12 @@ def CheckPresence(macList): # Define CheckPresence() function
             data = macStatsResponse.json().get('data') # Grab the 'data' from the reply
             macStats = dict(data[0]) # Convert 'data' json list to dict (grab first element of list)
             isWired = macStats['is_wired'] # If wireless device shows wired, it means it's offline. Stupid Unifi
-            lastSeen = macStats['last_seen'] # Get 'Last Seen' epoch time
-            timeNow = int(time.time()) # Get current epoch time
-            timeDiff = timeNow - lastSeen # Get time elasped since 'Last Seen' in seconds
-            if isWired == False: # Bug in Unifi Controller has 'last_seen' time updating even after device has left the network. If a wireless device is now showing 'wired' then it's a good indication that it has left the network
-                if timeDiff > thresholdLastSeen: # If time since 'last_seen' is greater than thresholdLastSeen, consider the device not present
-                    print ("The time difference for {} is {} seconds".format(mac, timeDiff))
-                    results.append({'mac': mac, 'present': False}) # Append results of presence check to results list
-                else:
-                    results.append({'mac': mac, 'present': True}) # Append results of presence check to results list
+            try:
+                visableToUAP = macStats['_last_seen_by_uap']
+            except:
+                visableToUAP = None
+            if visableToUAP != None and isWired == False: # Bug in Unifi Controller has 'last_seen' time updating even after device has left the network. If a wireless device is now showing 'wired' then it's a good indication that it has left the network
+                results.append({'mac': mac, 'present': True}) # Append results of presence check to results list
             else:
                 results.append({'mac': mac, 'present': False}) # Append results of presence check to results list
         session.get(logoutURL) # Logout from the API
