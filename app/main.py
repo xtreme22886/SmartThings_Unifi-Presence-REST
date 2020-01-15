@@ -147,7 +147,7 @@ def monitor(monitor: Unifimonitor): # Pass data supplied in POST to pydantic (Un
                 if monitor == client['name']: # If device to 'monitor' equals a client's name found in the wireless clients list
                     monitoringList.append({'name': client['name'], 'mac': client['mac'], 'id': client['id'], 'present': None, 'last_check': None}) # Append to monitoringList information about this device
                     macList.append(client['mac']) # Append the devicse's mac address to the macList
-        print("Starting presence checks every 5 seconds for: {}".format(macList)) # Print to screen the list of devices we are going to monitor every 10 seconds
+        print("Starting presence checks every {} seconds for: {}".format(monitoringInterval, macList)) # Print to screen the list of devices we are going to monitor every 10 seconds
         sched.resume() # Resume background scheduler
         sched.add_job(checkPresence, # Add new job to scheduler to run checkPresence() every X seconds and to replace exisiting jobs if they are found
                       'interval',
@@ -159,5 +159,6 @@ def monitor(monitor: Unifimonitor): # Pass data supplied in POST to pydantic (Un
 
     monitoringConfig = {} # Initlize JSON data
     monitoringConfig['monitoring'] = monitoringList # Add 'monitoring' key to JSON data and set value to monitoringList
+    
     with open('monitoring.json', 'w') as file: # Open 'monitoring.json' as file with write permissions
         json.dump(monitoringConfig, file, indent=4) # Write 'monitoringConfig' JSON object to file
