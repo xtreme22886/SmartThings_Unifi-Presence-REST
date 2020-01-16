@@ -47,3 +47,6 @@ Once you have a Docker container running the above image, you can verify things 
 ## Built With
 
 * [FastAPI](https://fastapi.tiangolo.com/) - Web framework for building APIs
+
+### Donate
+[PayPal.me](https://www.paypal.com/paypalme2/xtreme22886)
