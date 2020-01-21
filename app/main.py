@@ -13,7 +13,7 @@ monitoringInterval = 5 # Interval in seconds on when to check presence of device
 updateURL = None # Initilize global variable and set initial value to NULL (to be used in checkPresence)
 
 sched = BackgroundScheduler() # Initilize Backgroud Scheduler
-sched.start() # Start Backgroup Scheduler
+sched.start() # Start Backgroud Scheduler
 
 # Process data given in 'settings' POST
 class STsettings(BaseModel): # Define / initilize STsettings class
