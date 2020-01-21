@@ -75,7 +75,6 @@ def WiFiClients(): # Define WiFiClients() function
     if check: # If config file exist
         session = sessionPersist() # Run sessionPersist() to ensure we are logged in
         knownClientsResponse = session.get(knownClientsURL) # Request list of known clients
-        session.get(logoutURL) # Logout from the Unifi API
         clientList = knownClientsResponse.json().get('data') # Grab the 'data' from the reply
         knownWifiClients = [] # Initilize list
         for client in clientList: # For each client in clientList
