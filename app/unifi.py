@@ -6,6 +6,7 @@ import warnings
 # Ignore self-signed cert warning
 warnings.filterwarnings("ignore")
 
+# Get the latest values from the config file and define global variables
 def getConfig(): # Define getConfig() function
     try: # See if
         with open('config.json', 'r') as file: # We can open 'config.json' as file with read permissions
@@ -57,6 +58,7 @@ def CheckPresence(macList): # Define CheckPresence() function
             results.append({'mac': mac, 'present': False}) # Mark device as 'offline'
     return results # Return results list when done
 
+# Ensure we are logged into the Unifi Controller and maintain an active session
 def sessionPersist(): # Define sessionPersist() function 
     check_session = session.get(loggedinURL, verify=False) # Query an API endpoint to see if we are logged in
     if check_session.status_code == 200: # We are already logged in
@@ -66,7 +68,7 @@ def sessionPersist(): # Define sessionPersist() function
         if login_response.status_code == 200: # If login response was successful
             return session # Return new session
 
-# Log into the Unifi Controller and generate a list of known wireless clients
+# Generate a list of known wireless clients
 def WiFiClients(): # Define WiFiClients() function
     # Ensure we have latest config settings
     check = getConfig() # Load data from the config file (force a load here in case config settings have changed)
