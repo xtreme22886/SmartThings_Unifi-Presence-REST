@@ -6,10 +6,9 @@ import requests
 import logging
 from fastapi import FastAPI
 from pydantic import BaseModel
-from unifi import CheckPresence, WiFiClients
+from .unifi import CheckPresence, UniFiClients
 from apscheduler.schedulers.background import BackgroundScheduler
 
-PORT = 9443 # Port to listen on
 monitoringInterval = 5 # Interval in seconds on when to check presence of devices
 
 updateURL = None # Initilize global variable and set initial value to NULL (to be used in checkPresence)
@@ -129,11 +128,9 @@ def settings(settings: STsettings): # Pass data supplied in POST to pydantic (ST
 
     logging.info("{} - Received {} and saved to config.json".format(time.asctime(), data)) # Print to screen the data that was received and save to config.json
 
-@app.get("/wificlients") # To do when someone GET '/unificlients' page
-def wificlients(): # Define unificlients() function
-    #logging.info("Sending client list")
-    #print("Sending client list") # Print to screen that we are sending a list of clients to who ever requested them
-    clients = WiFiClients() # Call WiFiClients() function and store retuned list as clients
+@app.get("/unificlients") # To do when someone GET '/unificlients' page
+def unificlients(): # Define unificlients() function
+    clients = UniFiClients() # Call UniFiClients() function and store retuned list as clients
 
     if clients: # If list is not empty
         list = [] # Initilize new list
@@ -153,8 +150,7 @@ def monitor(monitor: UniFimonitor): # Pass data supplied in POST to pydantic (Un
         macList = [] # Initilize list
         monitoringList = [] # Initilize list
         for monitor in monitor.toMonitor: # For each device to 'monitor' in toMonitor
-            for client in WiFiClients(): # For each client in the wireless clients list provided by WiFiClients()
-                ##name = client['name'].replace("*","")
+            for client in UniFiClients(): # For each client in the wireless clients list provided by UniFiClients()
                 if monitor == client['name']: # If device to 'monitor' equals a client's name found in the wireless clients list
                     monitoringList.append({'name': client['name'], 'mac': client['mac'], 'id': client['id'], 'present': None, 'last_check': None}) # Append to monitoringList information about this device
                     macList.append(client['mac']) # Append the devicse's mac address to the macList
@@ -172,6 +168,3 @@ def monitor(monitor: UniFimonitor): # Pass data supplied in POST to pydantic (Un
     monitoringConfig['monitoring'] = monitoringList # Add 'monitoring' key to JSON data and set value to monitoringList
     with open('monitoring.json', 'w') as file: # Open 'monitoring.json' as file with write permissions
         json.dump(monitoringConfig, file, indent=4) # Write 'monitoringConfig' JSON object to file
-
-if __name__ == "__main__": # Initilize the main program
-    uvicorn.run(app, host="0.0.0.0", port=PORT) # Run the main program with uvicorn on specified listening address & port
