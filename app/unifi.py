@@ -69,15 +69,15 @@ def sessionPersist(): # Define sessionPersist() function
         if login_response.status_code == 200: # If login response was successful
             return session # Return new session
 
-# Generate a list of known wireless clients
-def WiFiClients(): # Define WiFiClients() function
+# Generate a list of known UniFi clients
+def UniFiClients(): # Define UniFiClients() function
     # Ensure we have latest config settings
     check = getConfig() # Load data from the config file (force a load here in case config settings have changed)
     if check: # If config file exist
         session = sessionPersist() # Run sessionPersist() to ensure we are logged in
         knownClientsResponse = session.get(knownClientsURL) # Request list of known clients
         clientList = knownClientsResponse.json().get('data') # Grab the 'data' from the reply
-        knownWifiClients = [] # Initilize list
+        knownUniFiClients = [] # Initilize list
         for client in clientList: # For each client in clientList
             if client.get('is_wired', None) != None: # Get client 'is_wired' value. If none found, use default 'None'. If 'is_wired' does not equal None then continue
                 if client['is_wired'] == False: # If client 'is_wired' equals False
@@ -93,9 +93,9 @@ def WiFiClients(): # Define WiFiClients() function
             else:
                 name = "unknown" # Set name to 'unknown' if a name/hostname could not be found
 
-            # Only add wireless clients to knownWifiClients list
-            if wireless == True: # If client wireless equals True
-                knownWifiClients.append({'name': name + " (" + mac[-5:] + ")", 'mac': mac, 'id': "unifi-" + mac[-5:]}) # Append client information to knownWifiClients list
-        return sorted(knownWifiClients, key = lambda i: i['name']) # Return a sorted (by name) list of konwn wireless clients
+            ## Only add wireless clients to knownWifiClients list
+            #if wireless == True: # If client wireless equals True
+            knownUniFiClients.append({'name': name + " (" + mac[-5:] + ")", 'mac': mac, 'id': "unifi-" + mac[-5:]}) # Append client information to knownUniFiClients list
+        return sorted(knownUniFiClients, key = lambda i: i['name']) # Return a sorted (by name) list of konwn UniFi clients
     else: # No config file
         return # Return NUL
