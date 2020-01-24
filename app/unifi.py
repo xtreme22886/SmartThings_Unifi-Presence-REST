@@ -14,15 +14,15 @@ def getConfig(): # Define getConfig() function
     except FileNotFoundError: # Could not open 'config.json' file
         return # Return a NUL response
 
-    # Base URL of the Unifi Controller and site:
+    # Base URL of the UniFi Controller and site:
     global baseURL # Initilize global variable
-    baseURL = 'https://{}/'.format(settings['unifi'][0]['address']) # Define Unifi Controller URL
+    baseURL = 'https://{}/'.format(settings['unifi'][0]['address']) # Define UniFi Controller URL
     global siteID # Initilize global variable
-    siteID = settings['unifi'][3]['site'] # Define Unifi Site ID
+    siteID = settings['unifi'][3]['site'] # Define UniFi Site ID
 
     # Credentials for the unifi controller:
     global loginCreds # Initilize global variable
-    loginCreds = { # Define Unifi credentials in JSON form
+    loginCreds = { # Define UniFi credentials in JSON form
         'username': settings['unifi'][1]['username'],
         'password': settings['unifi'][2]['password'],
         'remember': True
@@ -30,13 +30,13 @@ def getConfig(): # Define getConfig() function
 
     # API URLs
     global loginURL # Initilize global variable
-    loginURL = '{}api/login'.format(baseURL) # Define URL to use to log into the Unifi Controller
+    loginURL = '{}api/login'.format(baseURL) # Define URL to use to log into the UniFi Controller
     global loggedinURL # Initilze global variable
     loggedinURL = '{}api/self'.format(baseURL) # Define URL to check if we are still logged in
     global logoutURL # Initilize global variable
-    logoutURL = '{}api/logout'.format(baseURL) # Define URL to use to log out of the Unifi Controller
+    logoutURL = '{}api/logout'.format(baseURL) # Define URL to use to log out of the UniFi Controller
     global knownClientsURL # Initilize global variable
-    knownClientsURL = '{}api/s/{}/rest/user'.format(baseURL, siteID) # Define URL to use to get list of known clients from the Unifi Controller
+    knownClientsURL = '{}api/s/{}/rest/user'.format(baseURL, siteID) # Define URL to use to get list of known clients from the UniFi Controller
     return settings # Return contents of 'config.json'
 
 getConfig() # Initilize config settings at bootup
@@ -48,23 +48,24 @@ def CheckPresence(macList): # Define CheckPresence() function
     results = [] # Initilize list
     for mac in macList: # For each mac in macList
         macStatsURL = '{}api/s/{}/stat/user/{}'.format(baseURL, siteID, mac) # Define URL to use to get details about given mac address
-        macStatsResponse = session.get(macStatsURL) # Request details of given mac address from the Unifi Controller
+        macStatsResponse = session.get(macStatsURL) # Request details of given mac address from the UniFi Controller
         data = macStatsResponse.json().get('data') # Grab the 'data' from the reply
         macStats = dict(data[0]) # Convert 'data' json list to dict (grab first element of list)
         try: # See if
-            visableToUAP = macStats['_last_seen_by_uap'] # We can pull a value from this key
-            results.append({'mac': mac, 'present': True}) # If we can, mark device as 'online'
+            visibleToUAP = macStats['_last_seen_by_uap'] # We can pull a value from this key
+            if macStats['is_wired'] ==  False: # If we can, and device is showing not wired
+                results.append({'mac': mac, 'present': True}) # Then, mark device as 'online'
         except: # If not
             results.append({'mac': mac, 'present': False}) # Mark device as 'offline'
     return results # Return results list when done
 
-# Ensure we are logged into the Unifi Controller and maintain an active session
-def sessionPersist(): # Define sessionPersist() function 
+# Ensure we are logged into the UniFi Controller and maintain an active session
+def sessionPersist(): # Define sessionPersist() function
     check_session = session.get(loggedinURL, verify=False) # Query an API endpoint to see if we are logged in
     if check_session.status_code == 200: # We are already logged in
         return session # Return current session
     elif check_session.status_code == 401: # If query response returns '401' (not logged in) then
-        login_response = session.post(loginURL, data=json.dumps(loginCreds).encode('utf8'), headers={'Content-type': 'application/json'}, verify=False) # Log into the Unifi API
+        login_response = session.post(loginURL, data=json.dumps(loginCreds).encode('utf8'), headers={'Content-type': 'application/json'}, verify=False) # Log into the UniFi API
         if login_response.status_code == 200: # If login response was successful
             return session # Return new session
 
