@@ -3,17 +3,20 @@ import uvicorn
 import json
 import time
 import requests
+import logging
 from fastapi import FastAPI
 from pydantic import BaseModel
-from .unifi import CheckPresence, WiFiClients
+from unifi import CheckPresence, WiFiClients
 from apscheduler.schedulers.background import BackgroundScheduler
 
+PORT = 9443 # Port to listen on
 monitoringInterval = 5 # Interval in seconds on when to check presence of devices
 
 updateURL = None # Initilize global variable and set initial value to NULL (to be used in checkPresence)
 
 sched = BackgroundScheduler() # Initilize Backgroud Scheduler
-sched.start() # Start Backgroud Scheduler
+sched.start() # Start Backgroup Scheduler
+logging.getLogger('apscheduler.executors.default').setLevel(logging.WARNING) # Set apscheduler's logging to only output warning messages
 
 # Process data given in 'settings' POST
 class STsettings(BaseModel): # Define / initilize STsettings class
@@ -26,7 +29,7 @@ class STsettings(BaseModel): # Define / initilize STsettings class
     unifiSite: str # Process unifiSite as a string (is required)
 
 # Process data given in 'monitor' POST
-class Unifimonitor(BaseModel): # Define / initilize Unifimonitor class
+class UniFimonitor(BaseModel): # Define / initilize UniFimonitor class
     toMonitor: list = None # Process toMonitor as a list (is NOT required)
 
 # Check the presence of devices we are monitoring (to be called every 10 seconds)
@@ -51,7 +54,7 @@ def checkPresence(): # Define checkPresence() function
     # If changes were detected in presence, inform SmartThings SmartApp of them
     if presenceChange['update']: # If presenceChange has values
         global updateURL # Using the global variable 'updateURL' we set up in the globals section
-        print (presenceChange) # Print to screen the changes that occured
+        logging.info("{} - {}".format(time.asctime(), presenceChange)) # Print to screen the changes that occured
         if updateURL == None: # If updateURL has not been configured
             configs = config() # Load data from the config.json file by calling the config() function and capturing it's output as 'configs'
             updateURL = ("{}{}/update?access_token={}".format(configs['st'][0]['app_url'], configs['st'][1]['app_id'], configs['st'][2]['access_token'])) # Create the URL needed to connect to the SmartThings SmartApp to provide it the change of presence states
@@ -76,7 +79,7 @@ try: # See if
                       		id='checkPresence',
                       		replace_existing=True)
 except FileNotFoundError: # Could not open 'monitoring.json' file
-    print ("No monitoring file!") # Print to screen there is no monitoring file
+    logging.info("{} - No monitoring file!".format(time.asctime())) # Print to screen there is no monitoring file
 
 app = FastAPI() # Initilize FastAPI
 
@@ -117,30 +120,31 @@ def settings(settings: STsettings): # Pass data supplied in POST to pydantic (ST
 
     with open('config.json', 'w') as file: # Open 'config.json' as file with write permissions
         json.dump(data, file, indent=4, sort_keys=True) # Write 'data' JSON object to file
-        
-    # Obfuscate the Unifi password
-    visablePassword = {'password': settings.unifiPassword} # Define password to obfuscate
-    for setting in data['unifi']: # For each setting in the 'Unifi' JSON section
-        if setting == visablePassword: # If we are able to locate the Unifi password
-            setting['password'] = "<password>" # Then replace the password with <password>
 
-    print("Received {} and saved to config.json".format(data)) # Print to screen the data that was received and save to config.json
+    # Obfuscate the UniFi password
+    visiblePassword = {'password': settings.unifiPassword} # Define password to obfuscate
+    for setting in data['unifi']: # For each setting in the 'UniFi' JSON section
+        if setting == visiblePassword: # If we are able to locate the UniFi password
+            setting['password'] = "<redacted>" # Then replace the password with <redacted>
 
-@app.get("/wificlients") # To do when someone GET '/wificlients' page
-def wificlients(): # Define wificlients() function
-    print("Sending client list") # Print to screen that we are sending a list of clients to who ever requested them
-    wirelessClients = WiFiClients() # Call WiFiClients() function and store retuned list as wirelessClients
+    logging.info("{} - Received {} and saved to config.json".format(time.asctime(), data)) # Print to screen the data that was received and save to config.json
 
-    if wirelessClients: # If list is not empty
+@app.get("/wificlients") # To do when someone GET '/unificlients' page
+def wificlients(): # Define unificlients() function
+    #logging.info("Sending client list")
+    #print("Sending client list") # Print to screen that we are sending a list of clients to who ever requested them
+    clients = WiFiClients() # Call WiFiClients() function and store retuned list as clients
+
+    if clients: # If list is not empty
         list = [] # Initilize new list
-        for client in wirelessClients: # For each client in wirelessClients
+        for client in clients: # For each client in unifiClients
             list.append(client['name']) # Append client name to list
         return list # Return final list of client names
     else: # If list is empty
-        return("No config file!") # Return that there is no settings config file
+        return("No Config File!") # Return that there is no settings config file
 
 @app.post("/monitor") # To do when someone POST to '/monitor' page
-def monitor(monitor: Unifimonitor): # Pass data supplied in POST to pydantic (Unifimonitor) to be processed into objects
+def monitor(monitor: UniFimonitor): # Pass data supplied in POST to pydantic (UniFimonitor) to be processed into objects
     sched.pause() # Pause the background scheduler
     global macList # Initilizing global variable
     monitoringList = None # Initlizing variable
@@ -150,10 +154,11 @@ def monitor(monitor: Unifimonitor): # Pass data supplied in POST to pydantic (Un
         monitoringList = [] # Initilize list
         for monitor in monitor.toMonitor: # For each device to 'monitor' in toMonitor
             for client in WiFiClients(): # For each client in the wireless clients list provided by WiFiClients()
+                ##name = client['name'].replace("*","")
                 if monitor == client['name']: # If device to 'monitor' equals a client's name found in the wireless clients list
                     monitoringList.append({'name': client['name'], 'mac': client['mac'], 'id': client['id'], 'present': None, 'last_check': None}) # Append to monitoringList information about this device
                     macList.append(client['mac']) # Append the devicse's mac address to the macList
-        print("Starting presence checks every {} seconds for: {}".format(monitoringInterval, macList)) # Print to screen the list of devices we are going to monitor every 10 seconds
+        logging.info("{} - Starting presence checks every 10 seconds for: {}".format(time.asctime(), macList)) # Print to screen the list of devices we are going to monitor every 10 seconds
         sched.resume() # Resume background scheduler
         sched.add_job(checkPresence, # Add new job to scheduler to run checkPresence() every X seconds and to replace exisiting jobs if they are found
                       'interval',
@@ -161,10 +166,12 @@ def monitor(monitor: Unifimonitor): # Pass data supplied in POST to pydantic (Un
                       id='checkPresence',
                       replace_existing=True)
     else: # toMonitor list is empty
-        print("Stopping all presence checks") # Keep backgroud scheduler paused and print to screen that presence checks are currently disabled
+        logging.info("{} - Stopping all presence checks".format(time.asctime())) # Keep backgroud scheduler paused and print to screen that presence checks are currently disabled
 
     monitoringConfig = {} # Initlize JSON data
     monitoringConfig['monitoring'] = monitoringList # Add 'monitoring' key to JSON data and set value to monitoringList
-    
     with open('monitoring.json', 'w') as file: # Open 'monitoring.json' as file with write permissions
         json.dump(monitoringConfig, file, indent=4) # Write 'monitoringConfig' JSON object to file
+
+if __name__ == "__main__": # Initilize the main program
+    uvicorn.run(app, host="0.0.0.0", port=PORT) # Run the main program with uvicorn on specified listening address & port
