@@ -56,8 +56,7 @@ def CheckPresence(macList): # Define CheckPresence() function
             if macStats['is_wired'] ==  False: # If we can, and device is showing not wired
                 results.append({'mac': mac, 'present': True}) # Then, mark device as 'online'
         except: # If not
-            if macStats['is_wired'] == True: # Then check if Unifi shows device as wired
-                results.append({'mac': mac, 'present': False}) # If so, mark device as 'offline'
+            results.append({'mac': mac, 'present': False}) # If so, mark device as 'offline'
     return results # Return results list when done
 
 # Ensure we are logged into the UniFi Controller and maintain an active session
