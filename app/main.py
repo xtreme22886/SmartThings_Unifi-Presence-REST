@@ -26,7 +26,6 @@ class STsettings(BaseModel): # Define / initilize STsettings class
     unifiUsername: str # Process unifiUsername as a string (is required)
     unifiPassword: str # Process unifiPassword as a string (is required)
     unifiSite: str # Process unifiSite as a string (is required)
-    monitorGuest: bool # Process monitorGuest as a boolean (is required)
 
 # Process data given in 'monitor' POST
 class UniFimonitor(BaseModel): # Define / initilize UniFimonitor class
