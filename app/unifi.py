@@ -76,7 +76,7 @@ def GuestCheckPresence(): # Define CheckPresence() function
     session = sessionPersist() # Run sessionPersist() to ensure we are logged in
     macList = HotSpotClients()
     if macList:
-        results = ""
+        results = None
         for mac in macList: # For each mac in macList
             macStatsURL = '{}api/s/{}/stat/user/{}'.format(baseURL, siteID, mac) # Define URL to use to get details about given mac address
             macStatsResponse = session.get(macStatsURL) # Request details of given mac address from the UniFi Controller
