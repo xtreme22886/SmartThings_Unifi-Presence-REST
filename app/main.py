@@ -153,14 +153,12 @@ def unificlients(): # Define unificlients() function
 def monitor(monitor: UniFimonitor): # Pass data supplied in POST to pydantic (UniFimonitor) to be processed into objects
     sched.pause() # Pause the background scheduler
     global clientMacList # Initilizing global variable
-    monitoringClientList = None # Initlizing variable
-    monitoringGuest = None # Initlizing variable
+    monitoringDeviceList = None # Initilize list
 
     if monitor.toMonitor: # If toMonitor list has values
         clientMacList = [] # Initilize list
         monitoringList = [] # Initilze list
-        monitoringDeviceList = [] # Initilize list
-        #monitoringGuest = [] # Initilize list
+        monitoringDeviceList = []
         clients = UniFiClients() # Get list of UnifiClients
         for monitor in monitor.toMonitor: # For each device to 'monitor' in toMonitor
             if monitor == "unifi-guest":
@@ -183,7 +181,6 @@ def monitor(monitor: UniFimonitor): # Pass data supplied in POST to pydantic (Un
 
     monitoringConfig = {} # Initlize JSON data
     monitoringConfig['monitoring'] = monitoringDeviceList # Add 'clients' key to JSON data and set value to monitoringClientList
-    #monitoringConfig['guest'] = monitoringGuest # Add 'guest' key to JSON data and set value to monitoringGuest
 
     with open('monitoring.json', 'w') as file: # Open 'monitoring.json' as file with write permissions
         json.dump(monitoringConfig, file, indent=4) # Write 'monitoringConfig' JSON object to file
