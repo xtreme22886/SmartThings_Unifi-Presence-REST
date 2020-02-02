@@ -6,7 +6,7 @@ import requests
 import logging
 from fastapi import FastAPI
 from pydantic import BaseModel
-from .unifi import CheckPresence, UniFiClients
+from .unifi import CheckPresence, GuestCheckPresence, UniFiClients
 from apscheduler.schedulers.background import BackgroundScheduler
 
 monitoringInterval = 5 # Interval in seconds on when to check presence of devices
@@ -26,29 +26,34 @@ class STsettings(BaseModel): # Define / initilize STsettings class
     unifiUsername: str # Process unifiUsername as a string (is required)
     unifiPassword: str # Process unifiPassword as a string (is required)
     unifiSite: str # Process unifiSite as a string (is required)
+    monitorGuest: bool # Process monitorGuest as a boolean (is required)
 
 # Process data given in 'monitor' POST
 class UniFimonitor(BaseModel): # Define / initilize UniFimonitor class
     toMonitor: list = None # Process toMonitor as a list (is NOT required)
 
-# Check the presence of devices we are monitoring (to be called every 10 seconds)
+# Check the presence of devices we are monitoring (to be called every X seconds)
 def checkPresence(): # Define checkPresence() function
     presenceChange = {} # Initilze JSON data
     presenceChange['update'] = [] # Add 'update' key to JSON data and initlize a list
-    devicePresenceStatus = CheckPresence(macList) # Call CheckPresence() function and pass it a list of macs we built earlier and store results as 'devicePresenceStatus'
+    devicePresenceStatus = CheckPresence(clientMacList) # Call CheckPresence() function and pass it a list of macs we built earlier and store results as 'devicePresenceStatus'
 
     # Load data from 'monitoring.json' file to be compared with values from current presence check
     with open('monitoring.json', 'r') as file: # Open 'monitoring.json' as file with read permissions
         monitoring = json.load(file) # Load the JSON data found in file to a variable
 
+    for client in monitoring['monitoring']:
+        if client['id'] == "unifi-guest":
+            devicePresenceStatus.append(GuestCheckPresence())
+
     # Compare values from current presence check with what was found in 'monitoring.json' file and if presence changed, note it
     for device in devicePresenceStatus: # For each device in devicePresenceStatus
-        for monitor in monitoring['monitoring']: # For each device we 'monitor' in the 'monitoring' list
-            if device['mac'] == monitor['mac']: # If device mac from devicePresenceStatus matches the device mac from monitoring list
-                if device['present'] != monitor['present']: # If the current present status is different than the present status on file
-                   presenceChange['update'].append({'id': monitor['id'], 'present': device['present']}) # Append device ID and present state to presenceChange
-                monitor['present'] = device.get('present') # Update 'monitoring.json' file with device's current present state
-                monitor['last_check'] = (int(time.time())) # Update 'monitoring.json' file with device's last_check epoch time
+        for client in monitoring['monitoring']: # For each device in 'clients'
+            if device['id'] == client['id']: # If device mac from devicePresenceStatus matches the device mac from monitoring list
+                if device['present'] != client['present']: # If the current present status is different than the present status on file
+                   presenceChange['update'].append({'id': client['id'], 'present': device['present']}) # Append device ID and present state to presenceChange
+                client['present'] = device.get('present') # Update 'monitoring.json' file with device's current present state
+                client['last_check'] = (int(time.time())) # Update 'monitoring.json' file with device's last_check epoch time
 
     # If changes were detected in presence, inform SmartThings SmartApp of them
     if presenceChange['update']: # If presenceChange has values
@@ -64,14 +69,18 @@ def checkPresence(): # Define checkPresence() function
     with open('monitoring.json', 'w') as file: # Open 'monitoring.json' as a file with write permissions
         json.dump(monitoring, file, indent=4) # Write updated values to 'monitoring.json' file
 
+
 # Start presence check process at bootup if there are devices to monitor (running in global space)
 try: # See if
     with open('monitoring.json', 'r') as file: # We can open 'monitoring.json' as file with read permissions
         data = json.load(file) # Load the JSON data found in file
-        if data['monitoring']: # See if 'monitoring' list has devices
-            macList = [] # Initlize a new list
-            for device in data['monitoring']: # For each device in our mointoring.json file
-                macList.append(device['mac']) # Append device's mac address to macList list
+        if data['monitoring']: # See if 'clients' list has devices
+            clientMacList = [] # Initlize a new list
+            for device in data['monitoring']: # For each client device in our mointoring.json file
+                try:
+                    clientMacList.append(device['mac']) # Append client device's mac address to clientMacList list
+                except:
+                    None
                 sched.add_job(checkPresence, # Add new job to scheduler to run checkPresence() every X seconds and to replace exisiting jobs if they are found
                       		'interval',
                       		seconds=monitoringInterval,
@@ -143,18 +152,26 @@ def unificlients(): # Define unificlients() function
 @app.post("/monitor") # To do when someone POST to '/monitor' page
 def monitor(monitor: UniFimonitor): # Pass data supplied in POST to pydantic (UniFimonitor) to be processed into objects
     sched.pause() # Pause the background scheduler
-    global macList # Initilizing global variable
-    monitoringList = None # Initlizing variable
+    global clientMacList # Initilizing global variable
+    monitoringClientList = None # Initlizing variable
+    monitoringGuest = None # Initlizing variable
 
     if monitor.toMonitor: # If toMonitor list has values
-        macList = [] # Initilize list
-        monitoringList = [] # Initilize list
+        clientMacList = [] # Initilize list
+        monitoringList = [] # Initilze list
+        monitoringDeviceList = [] # Initilize list
+        #monitoringGuest = [] # Initilize list
+        clients = UniFiClients() # Get list of UnifiClients
         for monitor in monitor.toMonitor: # For each device to 'monitor' in toMonitor
-            for client in UniFiClients(): # For each client in the wireless clients list provided by UniFiClients()
-                if monitor == client['name']: # If device to 'monitor' equals a client's name found in the wireless clients list
-                    monitoringList.append({'name': client['name'], 'mac': client['mac'], 'id': client['id'], 'present': None, 'last_check': None}) # Append to monitoringList information about this device
-                    macList.append(client['mac']) # Append the devicse's mac address to the macList
-        logging.info("{} - Starting presence checks every 10 seconds for: {}".format(time.asctime(), macList)) # Print to screen the list of devices we are going to monitor every 10 seconds
+            if monitor == "unifi-guest":
+                    monitoringDeviceList.append({'name': "unifi-guest", 'id': "unifi-guest", 'present': None, 'last_check': None}) # Append to monitoringClientList information to montior guest
+                    monitoringList.append('unifi-guest')
+            for client in clients: # For each client in clients
+                if monitor == client['name']: # If device to 'monitor' equals a client's name found in the UniFi client list
+                    monitoringDeviceList.append({'name': client['name'], 'mac': client['mac'], 'id': client['id'], 'present': None, 'last_check': None}) # Append to monitoringClientList information about this device
+                    clientMacList.append(client['mac']) # Append the devicse's mac address to the clientMacList
+                    monitoringList.append(client['mac'])
+        logging.info("{} - Starting presence checks every {} seconds for: {}".format(time.asctime(), monitoringInterval, monitoringList)) # Print to screen the list of devices we are going to monitor every X seconds
         sched.resume() # Resume background scheduler
         sched.add_job(checkPresence, # Add new job to scheduler to run checkPresence() every X seconds and to replace exisiting jobs if they are found
                       'interval',
@@ -165,6 +182,8 @@ def monitor(monitor: UniFimonitor): # Pass data supplied in POST to pydantic (Un
         logging.info("{} - Stopping all presence checks".format(time.asctime())) # Keep backgroud scheduler paused and print to screen that presence checks are currently disabled
 
     monitoringConfig = {} # Initlize JSON data
-    monitoringConfig['monitoring'] = monitoringList # Add 'monitoring' key to JSON data and set value to monitoringList
+    monitoringConfig['monitoring'] = monitoringDeviceList # Add 'clients' key to JSON data and set value to monitoringClientList
+    #monitoringConfig['guest'] = monitoringGuest # Add 'guest' key to JSON data and set value to monitoringGuest
+
     with open('monitoring.json', 'w') as file: # Open 'monitoring.json' as file with write permissions
         json.dump(monitoringConfig, file, indent=4) # Write 'monitoringConfig' JSON object to file
