@@ -54,11 +54,11 @@ def sessionPersist(): # Define sessionPersist() function
         if login_response.status_code == 200: # If login response was successful
             return session # Return new session
 
-# Take a list of supplied mac address' and check their presence
-def CheckPresence(macList): # Define CheckPresence() function
+# Take a list of supplied client mac address' and check their presence
+def CheckPresence(clientMacList): # Define CheckPresence() function
     session = sessionPersist() # Run sessionPersist() to ensure we are logged in
     results = [] # Initilize list
-    for mac in macList: # For each mac in macList
+    for mac in clientMacList: # For each mac in clientMacList
         macStatsURL = '{}api/s/{}/stat/user/{}'.format(baseURL, siteID, mac) # Define URL to use to get details about given mac address
         macStatsResponse = session.get(macStatsURL) # Request details of given mac address from the UniFi Controller
         data = macStatsResponse.json().get('data') # Grab the 'data' from the reply
@@ -72,12 +72,13 @@ def CheckPresence(macList): # Define CheckPresence() function
             results.append({'id': "unifi-" + mac[-5:], 'present': False}) # If so, mark device as 'offline'
     return results # Return results list when done
 
+# Get a list a hotspot clients that are not expired and check their presence
 def GuestCheckPresence(): # Define CheckPresence() function
     session = sessionPersist() # Run sessionPersist() to ensure we are logged in
-    macList = HotSpotClients()
-    if macList:
-        results = None
-        for mac in macList: # For each mac in macList
+    guestMacList = HotSpotClients() # Call HotSpotClients() and save results as 'guestMacList'
+    if guestMacList: # If 'guestMacList' has values
+        results = None # Initilize variable
+        for mac in guestMacList: # For each mac in guestMacList
             macStatsURL = '{}api/s/{}/stat/user/{}'.format(baseURL, siteID, mac) # Define URL to use to get details about given mac address
             macStatsResponse = session.get(macStatsURL) # Request details of given mac address from the UniFi Controller
             data = macStatsResponse.json().get('data') # Grab the 'data' from the reply
@@ -89,8 +90,8 @@ def GuestCheckPresence(): # Define CheckPresence() function
             except: # If not
                 results = {'id': 'unifi-guest', 'present': False} # Mark guest as 'offline'
         return results # Return results list when done
-    else:
-        return {'id': 'unifi-guest', 'present': False}
+    else: # IF 'guestMacList' has no values
+        return {'id': 'unifi-guest', 'present': False} # Then, mark guest as 'offline'
 
 # Generate a list of known UniFi clients
 def UniFiClients(): # Define UniFiClients() function
@@ -115,18 +116,19 @@ def UniFiClients(): # Define UniFiClients() function
     else: # No config file
         return # Return NUL
 
-def HotSpotClients():
+# Generate a list of hotspot client mac address' that have not expired
+def HotSpotClients(): # Define HotSpotClients() function
     # Ensure we have latest config settings
     check = getConfig() # Load data from the config file (force a load here in case config settings have changed)
     if check: # If config file exist
         session = sessionPersist() # Run sessionPersist() to ensure we are logged in
-        hotspotManagerResponse = session.get(hotspotManagerURL) # Request list of known clients
+        hotspotManagerResponse = session.get(hotspotManagerURL) # Request list of hotspot clients
         guestList = hotspotManagerResponse.json().get('data') # Grab the 'data' from the reply
         guestMacList = [] # Initilize list
         for guest in guestList: # For each guest in guestList
-            if guest.get('expired') == False:
-                if guest.get('mac', None) != None: # Get client 'mac' value. If none found, use default 'None'. If 'mac' does not equal None then continue
-                    guestMacList.append(guest['mac']) # Append client information to knownUniFiClients list
-        return guestMacList # Return a sorted (by name) list of konwn UniFi clients
+            if guest.get('expired') == False: # If guest has not expired
+                if guest.get('mac', None) != None: # Get guest 'mac' value. If none found, use default 'None'. If 'mac' does not equal None then continue
+                    guestMacList.append(guest['mac']) # Append guest mac to 'guestMacList'
+        return guestMacList # Return list of UniFi guest mac address'
     else: # No config file
         return # Return NUL
