@@ -66,10 +66,10 @@ def CheckPresence(clientMacList): # Define CheckPresence() function
         try: # See if
             visibleToUAP = macStats['_last_seen_by_uap'] # We can pull a value from this key
             if macStats['is_wired'] ==  False: # If we can, and device is showing not wired
-                results.append({'id': "unifi-" + mac[-5:], 'present': True}) # Then, mark device as 'online'
+                results.append({'id': "unifi-" + mac[-5:], 'present': True}) # Mark device as 'online'
         except: # If not
             if macStats['is_wired'] == True: # Then check if Unifi shows device as wired
-                results.append({'id': "unifi-" + mac[-5:], 'present': False}) # If so, mark device as 'offline'
+                results.append({'id': "unifi-" + mac[-5:], 'present': False}) # Mark device as 'offline'
     return results # Return results list when done
 
 # Get a list a hotspot clients that are not expired and check their presence
@@ -86,13 +86,13 @@ def GuestCheckPresence(): # Define CheckPresence() function
             try: # See if
                 visibleToUAP = macStats['_last_seen_by_uap'] # We can pull a value from this key
                 if macStats['is_wired'] ==  False: # If we can, and device is showing not wired
-                    return {'id': 'unifi-guest', 'present': True} # Then, mark guest as 'online'
+                    return {'id': 'unifi-guest', 'present': True} # Mark guest as 'online'
             except: # If not
                 if macStats['is_wired'] == True: # Then check if Unifi shows guest as wired
                     results = {'id': 'unifi-guest', 'present': False} # Mark guest as 'offline'
         return results # Return results list when done
     else: # IF 'guestMacList' has no values
-        return {'id': 'unifi-guest', 'present': False} # Then, mark guest as 'offline'
+        return {'id': 'unifi-guest', 'present': False} # Mark guest as 'offline'
 
 # Generate a list of known UniFi clients
 def UniFiClients(): # Define UniFiClients() function
