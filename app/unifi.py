@@ -20,7 +20,7 @@ def getConfig(): # Define getConfig() function
     global siteID # Initilize global variable
     siteID = settings['unifi'][3]['site'] # Define UniFi Site ID
 
-    # Credentials for the unifi controller:
+    # Credentials for the UniFi Controller:
     global loginCreds # Initilize global variable
     loginCreds = { # Define UniFi credentials in JSON form
         'username': settings['unifi'][1]['username'],
@@ -91,7 +91,7 @@ def GuestCheckPresence(): # Define CheckPresence() function
                 if macStats['is_wired'] == True: # Then check if Unifi shows guest as wired
                     results = {'id': 'unifi-guest', 'present': False} # Mark guest as 'offline'
         return results # Return results list when done
-    else: # IF 'guestMacList' has no values
+    else: # If 'guestMacList' has no values
         return {'id': 'unifi-guest', 'present': False} # Mark guest as 'offline'
 
 # Generate a list of known UniFi clients
