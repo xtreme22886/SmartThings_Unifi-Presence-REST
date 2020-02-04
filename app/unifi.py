@@ -68,8 +68,8 @@ def CheckPresence(clientMacList): # Define CheckPresence() function
             if macStats['is_wired'] ==  False: # If we can, and device is showing not wired
                 results.append({'id': "unifi-" + mac[-5:], 'present': True}) # Then, mark device as 'online'
         except: # If not
-            # If macStats['is_wired'] == True: # Then check if Unifi shows device as wired
-            results.append({'id': "unifi-" + mac[-5:], 'present': False}) # If so, mark device as 'offline'
+            if macStats['is_wired'] == True: # Then check if Unifi shows device as wired
+                results.append({'id': "unifi-" + mac[-5:], 'present': False}) # If so, mark device as 'offline'
     return results # Return results list when done
 
 # Get a list a hotspot clients that are not expired and check their presence
@@ -88,7 +88,8 @@ def GuestCheckPresence(): # Define CheckPresence() function
                 if macStats['is_wired'] ==  False: # If we can, and device is showing not wired
                     return {'id': 'unifi-guest', 'present': True} # Then, mark guest as 'online'
             except: # If not
-                results = {'id': 'unifi-guest', 'present': False} # Mark guest as 'offline'
+                if macStats['is_wired'] == True: # Then check if Unifi shows guest as wired
+                    results = {'id': 'unifi-guest', 'present': False} # Mark guest as 'offline'
         return results # Return results list when done
     else: # IF 'guestMacList' has no values
         return {'id': 'unifi-guest', 'present': False} # Then, mark guest as 'offline'
