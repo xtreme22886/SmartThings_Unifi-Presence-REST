@@ -2,6 +2,7 @@
 import json
 import requests
 import warnings
+import time
 
 # Ignore self-signed cert warning
 warnings.filterwarnings("ignore")
@@ -65,11 +66,9 @@ def CheckPresence(clientMacList): # Define CheckPresence() function
         macStats = dict(data[0]) # Convert 'data' json list to dict (grab first element of list)
         try: # See if
             visibleToUAP = macStats['_last_seen_by_uap'] # We can pull a value from this key
-            if macStats['is_wired'] ==  False: # If we can, and device is showing not wired
-                results.append({'id': "unifi-" + mac[-5:], 'present': True}) # Mark device as 'online'
+            results.append({'id': "unifi-" + mac[-5:], 'last_seen': int(time.time())}) # # Update 'last_seen' time with current epoch time
         except: # If not
-            #if macStats['is_wired'] == True: # Then check if Unifi shows device as wired
-            results.append({'id': "unifi-" + mac[-5:], 'present': False}) # Mark device as 'offline'
+            results.append({'id': "unifi-" + mac[-5:], 'last_seen': None}) # Keep 'last_seen' NULL
     return results # Return results list when done
 
 # Get a list a hotspot clients that are not expired and check their presence
@@ -85,14 +84,12 @@ def GuestCheckPresence(): # Define CheckPresence() function
             macStats = dict(data[0]) # Convert 'data' json list to dict (grab first element of list)
             try: # See if
                 visibleToUAP = macStats['_last_seen_by_uap'] # We can pull a value from this key
-                if macStats['is_wired'] ==  False: # If we can, and device is showing not wired
-                    return {'id': 'unifi-guest', 'present': True} # Mark guest as 'online'
+                return {'id': 'unifi-guest', 'last_seen': int(time.time())} # Update 'last_seen' time with current epoch time
             except: # If not
-                #if macStats['is_wired'] == True: # Then check if Unifi shows guest as wired
-                results = {'id': 'unifi-guest', 'present': False} # Mark guest as 'offline'
+                results = {'id': 'unifi-guest', 'last_seen': None} # Keep 'last_seen' NULL
         return results # Return results list when done
-    else: # If 'guestMacList' has no values
-        return {'id': 'unifi-guest', 'present': False} # Mark guest as 'offline'
+    else:
+        return {'id': 'unifi-guest', 'last_seen': None}
 
 # Generate a list of known UniFi clients
 def UniFiClients(): # Define UniFiClients() function
