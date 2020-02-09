@@ -80,7 +80,6 @@ def checkPresence(): # Define checkPresence() function
     with open('monitoring.json', 'w') as file: # Open 'monitoring.json' as a file with write permissions
         json.dump(monitoring, file, indent=4) # Write updated values to 'monitoring.json' file
 
-
 # Start presence check process at bootup if there are devices to monitor (running in global space)
 try: # See if
     with open('monitoring.json', 'r') as file: # We can open 'monitoring.json' as file with read permissions
