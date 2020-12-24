@@ -32,9 +32,9 @@ def getConfig(): # Define getConfig() function
     # Check for UniFi OS (UDM Pro)
     unifiOS_check = requests.head('{}'.format(baseURL), verify=False) # Get UniFi Controller header
     if unifiOS_check.status_code == 200: # Header will return 200 if UniFi OS
-        unifiOS = True
+        unifiOS = True # Set unifiOS to True
     if unifiOS_check.status_code == 302: # Header will return 302 (redirect) to /manage if this is a standard controller
-        unifiOS = False
+        unifiOS = False # Set unifiOS to False
 
     # API URLs
     global loginURL # Initilize global variable
@@ -42,12 +42,12 @@ def getConfig(): # Define getConfig() function
     global knownClientsURL # Initilize global variable
     global hotspotManagerURL # Initilize global variable
     
-    if unifiOS:
+    if unifiOS: # If unifiOS is True
         loginURL = '{}api/auth/login'.format(baseURL) # Define URL to use to log into the UniFi Controller
         loggedinURL = '{}proxy/network/api/self'.format(baseURL) # Define URL to check if we are still logged in
         knownClientsURL = '{}proxy/network/api/s/{}/rest/user'.format(baseURL, siteID) # Define URL to use to get list of known clients from the UniFi Controller
         hotspotManagerURL = '{}proxy/network/api/s/{}/stat/guest'.format(baseURL, siteID) # Define URL to use to get list of known guest VIA the hotspot manager
-    else:
+    else: # If unifiOS is not True
         loginURL = '{}api/login'.format(baseURL) # Define URL to use to log into the UniFi Controller
         loggedinURL = '{}api/self'.format(baseURL) # Define URL to check if we are still logged in
         knownClientsURL = '{}api/s/{}/rest/user'.format(baseURL, siteID) # Define URL to use to get list of known clients from the UniFi Controller
