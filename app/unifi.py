@@ -1,11 +1,11 @@
-# Import all libraries required
+# Import required libraries
 import json
 import requests
-import warnings
 import time
 
-# Ignore self-signed cert warning
-warnings.filterwarnings("ignore")
+# Ignore SSL cert warnings
+from requests.packages.urllib3.exceptions import InsecureRequestWarning
+requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
 
 # Get the latest values from the config file and define global variables
 def getConfig(): # Define getConfig() function
@@ -15,43 +15,58 @@ def getConfig(): # Define getConfig() function
     except FileNotFoundError: # Could not open 'config.json' file
         return # Return a NUL response
 
-    # Base URL of the UniFi Controller and site:
+    # UniFi Controller base URL and UniFi Site ID
     global baseURL # Initilize global variable
-    baseURL = 'https://{}/'.format(settings['unifi'][0]['address']) # Define UniFi Controller URL
+    baseURL = 'https://{}/'.format(settings['unifi'][0]['address']) # Define UniFi Controller base URL
     global siteID # Initilize global variable
     siteID = settings['unifi'][3]['site'] # Define UniFi Site ID
 
-    # Credentials for the UniFi Controller:
+    # Credentials for the UniFi Controller
     global loginCreds # Initilize global variable
     loginCreds = { # Define UniFi credentials in JSON form
         'username': settings['unifi'][1]['username'],
         'password': settings['unifi'][2]['password'],
         'remember': True
     }
+    
+    # Check for UniFi OS (UDM Pro)
+    unifiOS_check = requests.head('{}'.format(baseURL), verify=False) # Get UniFi Controller header
+    if unifiOS_check.status_code == 200: # Header will return 200 if UniFi OS
+        unifiOS = True
+    if unifiOS_check.status_code == 302: # Header will return 302 (redirect) to /manage if this is a standard controller
+        unifiOS = False
 
     # API URLs
     global loginURL # Initilize global variable
-    loginURL = '{}api/login'.format(baseURL) # Define URL to use to log into the UniFi Controller
     global loggedinURL # Initilze global variable
-    loggedinURL = '{}api/self'.format(baseURL) # Define URL to check if we are still logged in
-    global logoutURL # Initilize global variable
-    logoutURL = '{}api/logout'.format(baseURL) # Define URL to use to log out of the UniFi Controller
     global knownClientsURL # Initilize global variable
-    knownClientsURL = '{}api/s/{}/rest/user'.format(baseURL, siteID) # Define URL to use to get list of known clients from the UniFi Controller
     global hotspotManagerURL # Initilize global variable
-    hotspotManagerURL = '{}api/s/{}/stat/guest'.format(baseURL, siteID) # Define URL to use to get list of known guest VIA the hotspot manager
+    
+    if unifiOS:
+        loginURL = '{}api/auth/login'.format(baseURL) # Define URL to use to log into the UniFi Controller
+        loggedinURL = '{}proxy/network/api/self'.format(baseURL) # Define URL to check if we are still logged in
+        knownClientsURL = '{}proxy/network/api/s/{}/rest/user'.format(baseURL, siteID) # Define URL to use to get list of known clients from the UniFi Controller
+        hotspotManagerURL = '{}proxy/network/api/s/{}/stat/guest'.format(baseURL, siteID) # Define URL to use to get list of known guest VIA the hotspot manager
+    else:
+        loginURL = '{}api/login'.format(baseURL) # Define URL to use to log into the UniFi Controller
+        loggedinURL = '{}api/self'.format(baseURL) # Define URL to check if we are still logged in
+        knownClientsURL = '{}api/s/{}/rest/user'.format(baseURL, siteID) # Define URL to use to get list of known clients from the UniFi Controller
+        hotspotManagerURL = '{}api/s/{}/stat/guest'.format(baseURL, siteID) # Define URL to use to get list of known guest VIA the hotspot manager
+    
     return settings # Return contents of 'config.json'
 
 getConfig() # Initilize config settings at bootup
 session = requests.Session() # Initilize request session at bootup
+session.verify = False # Do not verify SSL cert
 
 # Ensure we are logged into the UniFi Controller and maintain an active session
 def sessionPersist(): # Define sessionPersist() function
-    check_session = session.get(loggedinURL, verify=False) # Query an API endpoint to see if we are logged in
+    check_session = session.get(loggedinURL) # Query an API endpoint to see if we are logged in
     if check_session.status_code == 200: # We are already logged in
         return session # Return current session
     elif check_session.status_code == 401: # If query response returns '401' (not logged in) then
-        login_response = session.post(loginURL, data=json.dumps(loginCreds).encode('utf8'), headers={'Content-type': 'application/json'}, verify=False) # Log into the UniFi API
+        session.cookies.clear() # Clear session cookies
+        login_response = session.post(loginURL, json=loginCreds) # Log into the UniFi API
         if login_response.status_code == 200: # If login response was successful
             return session # Return new session
 
