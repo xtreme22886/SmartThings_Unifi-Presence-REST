@@ -49,4 +49,4 @@ Once you have a Docker container running the above image, you can verify things 
 * [FastAPI](https://fastapi.tiangolo.com/) - Web framework for building APIs
 
 ### Donate
-[PayPal.me](https://www.paypal.com/paypalme2/xtreme22886)
+[PayPal.me](https://www.paypal.com/donate?hosted_button_id=HEZ9EPNJR2UYA&source=url)
