@@ -143,6 +143,7 @@ def root(): # Define root() function
     </ul>
     </li>
     </ul>
+    <p>&nbsp;</p>
     <p style="text-align: center;">If you found this solution to be helpful, please consider a small donation to buy me a drink :P</p>
     <form style="text-align: center;" action="https://www.paypal.com/donate" method="post" target="_blank"><input name="hosted_button_id" type="hidden" value="HEZ9EPNJR2UYA" /> <input title="PayPal - The safer, easier way to pay online!" alt="Donate with PayPal button" name="submit" src="https://www.paypalobjects.com/en_US/i/btn/btn_donateCC_LG.gif" type="image" /> <img src="https://www.paypal.com/en_US/i/scr/pixel.gif" alt="" width="1" height="1" border="0" /></form>
     </html>"""
