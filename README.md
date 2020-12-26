@@ -42,7 +42,7 @@ To install this Docker image on a Synology NAS
 
 ## Testing
 
-Once you have a Docker container running the above image, you can verify things are working correctly by browsing to the IP address of your Docker with the port of the container. Browsing to that website should respond back with a *Hello World* message.
+Once you have a Docker container running the above image, you can verify things are working correctly by browsing to the IP address of your Docker with the port of the container. Browsing to this should load the main page with a list of site endpoints.
 
 ## Built With
 
