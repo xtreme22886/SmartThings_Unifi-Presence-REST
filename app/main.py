@@ -1,13 +1,14 @@
-# Import all libraries required
-import uvicorn
-import json
-import time
+# Import required libraries
 import requests
+import uvicorn
 import logging
+import time
+import json
 from fastapi import FastAPI
+from fastapi.responses import HTMLResponse
 from pydantic import BaseModel
-from .unifi import CheckPresence, GuestCheckPresence, UniFiClients
 from apscheduler.schedulers.background import BackgroundScheduler
+from .unifi import CheckPresence, GuestCheckPresence, UniFiClients
 
 monitoringInterval = 5 # Interval in seconds on when to check presence of devices
 
@@ -34,9 +35,19 @@ class UniFimonitor(BaseModel): # Define / initilize UniFimonitor class
 
 # Check the presence of devices we are monitoring (to be called every X seconds)
 def checkPresence(): # Define checkPresence() function
+    devicePresenceStatus = CheckPresence(clientMacList) # Call CheckPresence() function and pass it a list of macs we built earlier and store results as 'devicePresenceStatus'
+    if devicePresenceStatus == "noconfig": # If there is no config file
+        logging.info("{} - No config file was found!".format(time.asctime())) # Log that no config file was found
+        return # Exit function
+    if devicePresenceStatus == "unreachable": # If the UniFi Controller is unreachable
+        logging.info("{} - UniFi Controller is unreachable!".format(time.asctime())) # Log that the UniFi Controller is unreachable
+        return # Exit function
+    if devicePresenceStatus == "unauthorized": # If unable to log into the UniFi Controller
+        logging.info("{} - Unable to log into the UniFi Controller!".format(time.asctime())) # Log that we are unable to log into the UniFi Controller
+        return # Exit function
+
     presenceChange = {} # Initilze JSON data
     presenceChange['update'] = [] # Add 'update' key to JSON data and initlize a list
-    devicePresenceStatus = CheckPresence(clientMacList) # Call CheckPresence() function and pass it a list of macs we built earlier and store results as 'devicePresenceStatus'
 
     # Load data from 'monitoring.json' file to be compared with values from current presence check
     with open('monitoring.json', 'r') as file: # Open 'monitoring.json' as file with read permissions
@@ -80,6 +91,7 @@ def checkPresence(): # Define checkPresence() function
     with open('monitoring.json', 'w') as file: # Open 'monitoring.json' as a file with write permissions
         json.dump(monitoring, file, indent=4) # Write updated values to 'monitoring.json' file
 
+
 # Start presence check process at bootup if there are devices to monitor (running in global space)
 try: # See if
     with open('monitoring.json', 'r') as file: # We can open 'monitoring.json' as file with read permissions
@@ -97,13 +109,43 @@ try: # See if
                       		id='checkPresence',
                       		replace_existing=True)
 except FileNotFoundError: # Could not open 'monitoring.json' file
-    logging.info("{} - No monitoring file!".format(time.asctime())) # Log there is no monitoring file
+    logging.info("{} - No monitoring file was found!".format(time.asctime())) # Log there is no monitoring file
 
 app = FastAPI() # Initilize FastAPI
 
-@app.get("/") # To do when someone GET root '/' page
+@app.get("/", response_class=HTMLResponse) # To do when someone GET root '/' page
 def root(): # Define root() function
-    return {"message": "Hello World"} # Return message
+    return """
+    <html>
+    <p style="text-align: center;"><img src="https://raw.githubusercontent.com/xtreme22886/SmartThings_UniFi-Presence-Sensor/master/ubiquiti.png" alt="" width="150" height="150" /></p>
+    <h1 style="text-align: center;"><span style="text-decoration: underline;">UniFi Presence Controller</span></h1>
+    <ul>
+    <li><strong>/config</strong>
+    <ul>
+    <li>Access the config file</li>
+    </ul>
+    </li>
+    <li><strong>/monitoring</strong>
+    <ul>
+    <li>Access the monitoring file</li>
+    </ul>
+    </li>
+    <li><strong>/unificlients</strong>
+    <ul>
+    <li>Get a list of UniFi clients</li>
+    <li>Will alert you if:
+    <ul>
+    <li>No config file was found</li>
+    <li>Unable to reach the UniFi Controller</li>
+    <li>Unable to authenticate with the UniFi Controller</li>
+    </ul>
+    </li>
+    </ul>
+    </li>
+    </ul>
+    <p style="text-align: center;">If you found this solution to be helpful, please consider a small donation to buy me a drink :P</p>
+    <form style="text-align: center;" action="https://www.paypal.com/donate" method="post" target="_blank"><input name="hosted_button_id" type="hidden" value="HEZ9EPNJR2UYA" /> <input title="PayPal - The safer, easier way to pay online!" alt="Donate with PayPal button" name="submit" src="https://www.paypalobjects.com/en_US/i/btn/btn_donateCC_LG.gif" type="image" /> <img src="https://www.paypal.com/en_US/i/scr/pixel.gif" alt="" width="1" height="1" border="0" /></form>
+    </html>"""
 
 @app.get("/config") # To do when someone GET '/config' page
 def config(): # Define config() function
@@ -112,7 +154,7 @@ def config(): # Define config() function
             config = json.load(file) # Load JSON data found in file
             return config # Return output of file
     except FileNotFoundError: # Could not open 'config.json' file
-        return "No config file!" # Return there is no config file
+        return "No config file was found!" # Return there is no config file
 
 @app.get("/monitoring") # To do when someone GET '/monitoring' page
 def monitoring(): # Define monitoring() function
@@ -121,7 +163,7 @@ def monitoring(): # Define monitoring() function
             monitoring = json.load(file) # Load JSON data found in file
             return monitoring # Return output of file
     except FileNotFoundError: # Could not open 'monitoring.json' file
-        return "No monitoring file!" # Return there is no monitoring file
+        return "No monitoring file was found!" # Return there is no monitoring file
 
 @app.post("/settings") # To do when someone POST to '/settings' page
 def settings(settings: STsettings): # Pass data supplied in POST to pydantic (STsettings) to be processed into objects
@@ -140,7 +182,7 @@ def settings(settings: STsettings): # Pass data supplied in POST to pydantic (ST
     with open('config.json', 'w') as file: # Open 'config.json' as file with write permissions
         json.dump(data, file, indent=4, sort_keys=True) # Write 'data' JSON object to file
 
-    # Obfuscate the UniFi password and ST access token
+    # Obfuscate the UniFi password and st access token
     for setting in data['unifi']: # For each setting in the 'unifi' JSON section
         if setting == {'password': settings.unifiPassword}: # If we are able to locate the UniFi password
             setting['password'] = "<redacted>" # Then replace the password with <redacted>
@@ -153,14 +195,17 @@ def settings(settings: STsettings): # Pass data supplied in POST to pydantic (ST
 @app.get("/unificlients") # To do when someone GET '/unificlients' page
 def unificlients(): # Define unificlients() function
     clients = UniFiClients() # Call UniFiClients() function and store retuned list as clients
+    if clients == "noconfig": # If there is no config file
+        return "No config file was found!" # Log that no config file was found
+    if clients == "unreachable": # If the UniFi Controller is unreachable
+        return "UniFi Controller is unreachable" # Log that the UniFi Controller is unreachable
+    if clients == "unauthorized": # If unable to log into the UniFi Controller
+        return "Unable to log into the UniFi Controller" # Log that we are unable to log into the UniFi Controller
 
-    if clients: # If list is not empty
-        list = [] # Initilize new list
-        for client in clients: # For each client in unifiClients
-            list.append(client['name']) # Append client name to list
-        return list # Return final list of client names
-    else: # If list is empty
-        return("No Config File!") # Return that there is no settings config file
+    list = [] # Initilize new list
+    for client in clients: # For each client in unifiClients
+        list.append(client['name']) # Append client name to list
+    return list # Return final list of client names
 
 @app.post("/monitor") # To do when someone POST to '/monitor' page
 def monitor(monitor: UniFimonitor): # Pass data supplied in POST to pydantic (UniFimonitor) to be processed into objects
@@ -173,6 +218,16 @@ def monitor(monitor: UniFimonitor): # Pass data supplied in POST to pydantic (Un
         presenceCheckList = [] # Initilze list
         monitoringList = [] # Initlize list
         clients = UniFiClients() # Get list of UnifiClients
+        if clients == "noconfig": # If there is no config file
+            logging.info("{} - No config file was found!".format(time.asctime())) # Log that no config file was found
+            return # Exit function
+        if clients == "unreachable": # If the UniFi Controller is unreachable
+            logging.info("{} - UniFi Controller is unreachable!".format(time.asctime())) # Log that the UniFi Controller is unreachable
+            return # Exit function
+        if clients == "unauthorized": # If unable to log into the UniFi Controller
+            logging.info("{} - Unable to log into the UniFi Controller!".format(time.asctime())) # Log that we are unable to log into the UniFi Controller
+            return # Exit function
+
         for monitor in monitor.toMonitor: # For each device to 'monitor' in toMonitor
             if monitor == "unifi-guest": # If device equals "unifi-guest"
                     monitoringList.append({'name': "unifi-guest", 'id': "unifi-guest", 'last_seen': 0, 'present': None, 'last_check': None}) # Then, append to monitoringList information about guest
