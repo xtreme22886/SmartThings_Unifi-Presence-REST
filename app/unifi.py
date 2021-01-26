@@ -63,11 +63,15 @@ def getConfig(): # Define getConfig() function
         loggedinURL = '{}proxy/network/api/self'.format(baseURL) # Define URL to check if we are still logged in
         knownClientsURL = '{}proxy/network/api/s/{}/rest/user'.format(baseURL, siteID) # Define URL to use to get list of known clients from the UniFi Controller
         hotspotManagerURL = '{}proxy/network/api/s/{}/stat/guest'.format(baseURL, siteID) # Define URL to use to get list of known guest VIA the hotspot manager
+        macStatsURL = '{}proxy/network/api/s/{}/stat/user/'.format(baseURL, siteID) # Define URL to use to get details about a mac address
+        guestMacStatsURL = '{}proxy/network/api/s/{}/stat/user/'.format(baseURL, siteID) # Define URL to use to get details about a mac address
     else:
         loginURL = '{}api/login'.format(baseURL) # Define URL to use to log into the UniFi Controller
         loggedinURL = '{}api/self'.format(baseURL) # Define URL to check if we are still logged in
         knownClientsURL = '{}api/s/{}/rest/user'.format(baseURL, siteID) # Define URL to use to get list of known clients from the UniFi Controller
         hotspotManagerURL = '{}api/s/{}/stat/guest'.format(baseURL, siteID) # Define URL to use to get list of known guest VIA the hotspot manager
+        macStatsURL = '{}api/s/{}/stat/user/'.format(baseURL, siteID) # Define URL to use to get details about a mac address
+        guestMacStatsURL = '{}api/s/{}/stat/user/'.format(baseURL, siteID) # Define URL to use to get details about a mac address
 
     return settings # Return contents of 'config.json'
 
@@ -98,8 +102,8 @@ def CheckPresence(clientMacList): # Define CheckPresence() function
         return session # Return the error
     results = [] # Initilize list
     for mac in clientMacList: # For each mac in clientMacList
-        macStatsURL = '{}api/s/{}/stat/user/{}'.format(baseURL, siteID, mac) # Define URL to use to get details about given mac address
-        macStatsResponse = session.get(macStatsURL) # Request details of given mac address from the UniFi Controller
+        getMacStats = macStatsURL + mac # Define URL to use to get details about given mac address
+        macStatsResponse = session.get(getMacStats) # Request details of given mac address from the UniFi Controller
         data = macStatsResponse.json().get('data') # Grab the 'data' from the reply
         macStats = dict(data[0]) # Convert 'data' json list to dict (grab first element of list)
         try: # See if
@@ -129,9 +133,9 @@ def GuestCheckPresence(): # Define CheckPresence() function
     if guestMacList: # If 'guestMacList' has values
         results = None # Initilize variable
         for mac in guestMacList: # For each mac in guestMacList
-            macStatsURL = '{}api/s/{}/stat/user/{}'.format(baseURL, siteID, mac) # Define URL to use to get details about given mac address
-            macStatsResponse = session.get(macStatsURL) # Request details of given mac address from the UniFi Controller
-            data = macStatsResponse.json().get('data') # Grab the 'data' from the reply
+            getGuestMacStats = guestMacStatsURL + mac # Define URL to use to get details about given mac address
+            guestMacStatsResponse = session.get(getGuestMacStats) # Request details of given mac address from the UniFi Controller
+            data = guestMacStatsResponse.json().get('data') # Grab the 'data' from the reply
             macStats = dict(data[0]) # Convert 'data' json list to dict (grab first element in list)
             try: # See if
                 visibleToUAP = macStats['_last_seen_by_uap'] # We can pull a value from this key
