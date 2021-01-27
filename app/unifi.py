@@ -57,6 +57,7 @@ def getConfig(): # Define getConfig() function
     global loggedinURL # Initilze global variable
     global knownClientsURL # Initilize global variable
     global hotspotManagerURL # Initilize global variable
+    global macStatsURL # Initilize global variable
 
     if unifiOS:
         loginURL = '{}api/auth/login'.format(baseURL) # Define URL to use to log into the UniFi Controller
