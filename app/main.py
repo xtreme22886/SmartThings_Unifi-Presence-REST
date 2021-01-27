@@ -119,6 +119,7 @@ def root(): # Define root() function
     <html>
     <p style="text-align: center;"><img src="https://raw.githubusercontent.com/xtreme22886/SmartThings_UniFi-Presence-Sensor/master/ubiquiti.png" alt="" width="150" height="150" /></p>
     <h1 style="text-align: center;"><span style="text-decoration: underline;">UniFi Presence Controller</span></h1>
+    <h3 style="text-align: center;">version 2.0</h3>
     <ul>
     <li><strong>/config</strong>
     <ul>
